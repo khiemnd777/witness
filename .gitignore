@@ -13,3 +13,4 @@ yarn-error.log*
 pnpm-debug.log*
 coverage/
 *.local
+scripts/set-github-secrets.local.sh

@@ -12,8 +12,6 @@ concurrency:
 
 env:
   NODE_VERSION: "22"
-  DOMAIN: witness.dailyturning.com
-  SITE_ROOT: /var/www/witness
 
 jobs:
   ci:
@@ -50,7 +48,10 @@ jobs:
     if: github.ref == 'refs/heads/main'
     environment:
       name: production
-      url: https://witness.dailyturning.com
+      url: ${{ format('https://{0}', secrets.APP_DOMAIN) }}
+    env:
+      APP_DOMAIN: ${{ secrets.APP_DOMAIN }}
+      SITE_ROOT: ${{ secrets.SITE_ROOT }}
 
     steps:
       - name: Checkout
@@ -86,7 +87,7 @@ jobs:
           LETSENCRYPT_EMAIL: ${{ secrets.LETSENCRYPT_EMAIL }}
           RELEASE_NAME: ${{ steps.release.outputs.name }}
         run: |
-          EMAIL="${LETSENCRYPT_EMAIL:-admin@${DOMAIN}}"
+          EMAIL="${LETSENCRYPT_EMAIL:-admin@${APP_DOMAIN}}"
           sshpass -p "$VPS_PASSWORD" ssh -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" \
-            "bash /tmp/witness-deploy/deploy/scripts/provision_server.sh '$DOMAIN' '$SITE_ROOT' '$EMAIL' && \
+            "bash /tmp/witness-deploy/deploy/scripts/provision_server.sh '$APP_DOMAIN' '$SITE_ROOT' '$EMAIL' && \
              bash /tmp/witness-deploy/deploy/scripts/deploy_release.sh '$SITE_ROOT' '$RELEASE_NAME' '/tmp/witness-deploy/dist'"
