@@ -1,0 +1,125 @@
+[
+  {
+    "id": "chapter_01_quest_01",
+    "chapterId": "chapter_01",
+    "title": "Help the Travelers",
+    "description": "Help a weary couple find shelter in crowded Bethlehem.",
+    "location": "Bethlehem",
+    "steps": [
+      {
+        "id": "ask_innkeeper",
+        "type": "talk",
+        "npcId": "innkeeper_01",
+        "instruction": "Ask the innkeeper for a room."
+      },
+      {
+        "id": "collect_blanket",
+        "type": "collect",
+        "itemId": "blanket",
+        "count": 1,
+        "instruction": "Find a clean blanket near the market."
+      },
+      {
+        "id": "prepare_stable",
+        "type": "give_item",
+        "itemId": "blanket",
+        "target": "stable_area",
+        "requiresItemId": "blanket",
+        "instruction": "Prepare the stable with the clean blanket."
+      },
+      {
+        "id": "lead_travelers",
+        "type": "go_to",
+        "target": "stable_area",
+        "instruction": "Lead the travelers to the prepared stable."
+      }
+    ],
+    "rewards": {
+      "love": 1,
+      "humility": 1
+    },
+    "reflection": {
+      "theme": "Humility",
+      "message": "The promised King enters the world in a place most people would overlook.",
+      "bibleRefIds": ["luke_2_1_7"]
+    }
+  },
+  {
+    "id": "chapter_01_quest_02",
+    "chapterId": "chapter_01",
+    "title": "The Shepherds' Message",
+    "description": "Meet the shepherds and follow their joy toward the manger.",
+    "location": "Bethlehem Fields",
+    "steps": [
+      {
+        "id": "hear_shepherd",
+        "type": "talk",
+        "npcId": "shepherd_01",
+        "instruction": "Listen to the shepherd's message."
+      }
+    ],
+    "rewards": {
+      "faith": 1,
+      "courage": 1
+    },
+    "reflection": {
+      "theme": "Hope",
+      "message": "The first announcement is given to ordinary workers keeping watch at night.",
+      "bibleRefIds": ["luke_2_8_20"]
+    }
+  },
+  {
+    "id": "chapter_01_quest_03",
+    "chapterId": "chapter_01",
+    "title": "Follow the Star",
+    "description": "Help travelers from the East understand the road through Bethlehem.",
+    "location": "Bethlehem",
+    "steps": [
+      {
+        "id": "meet_magi",
+        "type": "talk",
+        "npcId": "magi_01",
+        "instruction": "Speak with the traveler from the East."
+      },
+      {
+        "id": "observe_star",
+        "type": "observe",
+        "target": "star_viewpoint",
+        "instruction": "Observe the star from the village edge."
+      }
+    ],
+    "rewards": {
+      "wisdom": 1,
+      "faith": 1
+    },
+    "reflection": {
+      "theme": "Seeking",
+      "message": "Those who seek with humility are drawn toward worship and wonder.",
+      "bibleRefIds": ["matthew_2_1_12"]
+    }
+  },
+  {
+    "id": "chapter_01_quest_04",
+    "chapterId": "chapter_01",
+    "title": "Go See the Infant Jesus",
+    "description": "Return to the stable and witness the newborn child with reverence.",
+    "location": "Bethlehem Stable",
+    "steps": [
+      {
+        "id": "see_infant_jesus",
+        "type": "observe",
+        "target": "manger_scene",
+        "instruction": "Go see the Infant Jesus in the stable."
+      }
+    ],
+    "rewards": {
+      "faith": 1,
+      "love": 1
+    },
+    "reflection": {
+      "theme": "Worship",
+      "message": "The journey leads not to power or spectacle, but to humble worship before the child.",
+      "bibleRefIds": ["luke_2_1_7", "matthew_2_1_12"]
+    }
+  }
+]

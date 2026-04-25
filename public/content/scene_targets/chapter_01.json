@@ -1,0 +1,17 @@
+[
+  {
+    "id": "stable_area",
+    "label": "Stable Area",
+    "kind": "location"
+  },
+  {
+    "id": "manger_scene",
+    "label": "Manger Scene",
+    "kind": "observe"
+  },
+  {
+    "id": "star_viewpoint",
+    "label": "Star Viewpoint",
+    "kind": "observe"
+  }
+]

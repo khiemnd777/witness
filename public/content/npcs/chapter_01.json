@@ -1,0 +1,42 @@
+[
+  {
+    "id": "innkeeper_01",
+    "name": "Innkeeper",
+    "role": "common",
+    "description": "A tired innkeeper trying to manage the crowded village during the census.",
+    "dialogueId": "bethlehem_innkeeper_01",
+    "position": [-5.2, 0, -1.25],
+    "interactionLabel": "Ask about shelter"
+  },
+  {
+    "id": "shepherd_01",
+    "name": "Shepherd",
+    "role": "common",
+    "description": "A shepherd carrying news from the fields outside Bethlehem.",
+    "dialogueId": "bethlehem_shepherd_01",
+    "position": [-1, 0, 5.5],
+    "interactionLabel": "Hear the message"
+  },
+  {
+    "id": "magi_01",
+    "name": "Traveler from the East",
+    "role": "historical",
+    "description": "A traveler following a sign and seeking the newborn king.",
+    "dialogueId": "bethlehem_magi_01",
+    "position": [7, 0, 3.5],
+    "interactionLabel": "Discuss the star"
+  },
+  {
+    "id": "jesus_in_manger",
+    "name": "Jesus",
+    "role": "sacred_narrative",
+    "description": "Represented only within sacred narrative scenes, never as a normal quest NPC.",
+    "position": [6.1, 0, -6.8],
+    "interactionLabel": "Witness with reverence",
+    "sacredRules": {
+      "normalQuestNpc": false,
+      "commandable": false,
+      "playable": false
+    }
+  }
+]

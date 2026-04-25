@@ -1,0 +1,14 @@
+{
+  "id": "chapter_01",
+  "number": 1,
+  "title": "The Birth",
+  "subtitle": "Bethlehem",
+  "location": "Bethlehem",
+  "summary": "A young citizen near Bethlehem helps travelers, listens to shepherds, and witnesses hope arriving in a humble place.",
+  "theme": "God often begins His greatest works in humble places.",
+  "questIds": [
+    "chapter_01_quest_01",
+    "chapter_01_quest_02",
+    "chapter_01_quest_03"
+  ]
+}

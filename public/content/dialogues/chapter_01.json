@@ -1,0 +1,83 @@
+[
+  {
+    "id": "bethlehem_innkeeper_01",
+    "npcId": "innkeeper_01",
+    "title": "The Crowded Inn",
+    "lines": [
+      {
+        "id": "line_01",
+        "speaker": "Innkeeper",
+        "text": "The town is full tonight. Every room has already been taken."
+      },
+      {
+        "id": "line_02",
+        "speaker": "Player",
+        "text": "Is there any place where they can rest?"
+      },
+      {
+        "id": "line_03",
+        "speaker": "Innkeeper",
+        "text": "There is a stable behind the house. It is not much, but it is sheltered."
+      },
+      {
+        "id": "line_04",
+        "speaker": "Player",
+        "choices": [
+          {
+            "id": "prepare_stable_love",
+            "text": "I will make it ready for them.",
+            "effect": {
+              "love": 1
+            }
+          },
+          {
+            "id": "prepare_stable_wisdom",
+            "text": "I will find what they need first.",
+            "effect": {
+              "wisdom": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bethlehem_shepherd_01",
+    "npcId": "shepherd_01",
+    "title": "Good News in the Night",
+    "lines": [
+      {
+        "id": "line_01",
+        "speaker": "Shepherd",
+        "text": "We were watching the flock when the night became bright around us."
+      },
+      {
+        "id": "line_02",
+        "speaker": "Shepherd",
+        "text": "We were told not to fear. Good news has come for all people."
+      },
+      {
+        "id": "line_03",
+        "speaker": "Player",
+        "text": "Then let us go and see what has happened."
+      }
+    ]
+  },
+  {
+    "id": "bethlehem_magi_01",
+    "npcId": "magi_01",
+    "title": "Travelers from the East",
+    "lines": [
+      {
+        "id": "line_01",
+        "speaker": "Traveler",
+        "text": "We have followed a sign in the heavens and seek the child born king."
+      },
+      {
+        "id": "line_02",
+        "speaker": "Player",
+        "text": "The village is small, but tonight every road seems to lead toward wonder."
+      }
+    ]
+  }
+]
