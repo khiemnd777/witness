@@ -48,7 +48,6 @@ jobs:
     if: github.ref == 'refs/heads/main'
     environment:
       name: production
-      url: ${{ format('https://{0}', secrets.APP_DOMAIN) }}
     env:
       APP_DOMAIN: ${{ secrets.APP_DOMAIN }}
       SITE_ROOT: ${{ secrets.SITE_ROOT }}
