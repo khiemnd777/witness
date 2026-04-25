@@ -82,7 +82,8 @@ The repository includes:
 - Domain: `https://witness.dailyturning.com`
 - Server root: `/var/www/witness`
 - Release strategy: timestamped releases with `current` symlink switching
-- SSL: Let's Encrypt, provisioned automatically during deploy
+- App runtime: dedicated `nginx:alpine` container on `127.0.0.1:18080`
+- SSL and ingress: handled by the shared VPS Caddy instance
 
 ### Required GitHub Secrets
 
@@ -91,7 +92,8 @@ Add these repository secrets before running the deploy workflow:
 - `VPS_HOST`
 - `VPS_USER`
 - `VPS_PASSWORD`
-- `LETSENCRYPT_EMAIL`
+- `APP_DOMAIN`
+- `SITE_ROOT`
 
 ### Deployment Behavior
 
@@ -100,12 +102,12 @@ On each push to `main`, GitHub Actions:
 1. Installs dependencies and runs the production build
 2. Uploads the generated `dist/` artifact
 3. Connects to the VPS over SSH
-4. Installs or verifies `nginx` and `certbot`
-5. Configures the `witness.dailyturning.com` server block
-6. Requests and attaches the SSL certificate if it does not exist yet
-7. Publishes a new timestamped release and repoints `current`
+4. Updates the shared Caddy config with a managed `witness.dailyturning.com` block
+5. Publishes a new timestamped release and repoints `current`
+6. Recreates the dedicated Witness static container on `127.0.0.1:18080`
+7. Reloads Caddy so HTTPS and routing are applied to the new site
 
-For SSL issuance to succeed, DNS for `witness.dailyturning.com` must already point to the VPS and ports `80` and `443` must be reachable from the internet.
+For the site to come up successfully, DNS for `witness.dailyturning.com` must already point to the VPS and Docker plus the shared Caddy container must be healthy on the server.
 
 ## Roadmap Direction
 

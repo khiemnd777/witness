@@ -3,34 +3,26 @@ set -euo pipefail
 
 DOMAIN=${1:?domain is required}
 SITE_ROOT=${2:?site root is required}
-LETSENCRYPT_EMAIL=${3:?letsencrypt email is required}
 
-SITE_CONFIG="/etc/nginx/sites-available/${DOMAIN}.conf"
-SITE_LINK="/etc/nginx/sites-enabled/${DOMAIN}.conf"
-WEBROOT="/var/www/certbot"
+CADDYFILE_PATH="/opt/perfect-pitch/current/deploy/Caddyfile"
+CADDY_CONTAINER="perfect-pitch-caddy-1"
+WITNESS_PORT="18080"
+MANAGED_START="# witness managed start"
+MANAGED_END="# witness managed end"
+NGINX_DIR="${SITE_ROOT}/shared/nginx"
+NGINX_CONF="${NGINX_DIR}/default.conf"
 
-export DEBIAN_FRONTEND=noninteractive
+mkdir -p "${SITE_ROOT}/releases" "${SITE_ROOT}/shared" "${NGINX_DIR}"
 
-apt-get update
-apt-get install -y nginx certbot python3-certbot-nginx
-
-mkdir -p "$SITE_ROOT/releases" "$WEBROOT"
-
-cat > "$SITE_CONFIG" <<EOF
+cat > "${NGINX_CONF}" <<'EOF'
 server {
     listen 80;
-    listen [::]:80;
-    server_name ${DOMAIN};
-
-    root ${SITE_ROOT}/current;
+    server_name _;
+    root /usr/share/nginx/html;
     index index.html;
 
-    location /.well-known/acme-challenge/ {
-        root ${WEBROOT};
-    }
-
     location / {
-        try_files \$uri \$uri/ /index.html;
+        try_files $uri $uri/ /index.html;
     }
 
     location /assets/ {
@@ -40,15 +32,36 @@ server {
 }
 EOF
 
-rm -f /etc/nginx/sites-enabled/default
-ln -sfn "$SITE_CONFIG" "$SITE_LINK"
-
-nginx -t
-systemctl enable nginx
-systemctl reload nginx || systemctl restart nginx
-
-if [ ! -d "/etc/letsencrypt/live/${DOMAIN}" ]; then
-  certbot --nginx --non-interactive --agree-tos --redirect -m "$LETSENCRYPT_EMAIL" -d "$DOMAIN"
+if [ ! -f "${CADDYFILE_PATH}" ]; then
+  echo "Caddyfile not found at ${CADDYFILE_PATH}" >&2
+  exit 1
 fi
 
-systemctl reload nginx
+tmp_file=$(mktemp)
+trap 'rm -f "${tmp_file}"' EXIT
+
+awk -v start="${MANAGED_START}" -v end="${MANAGED_END}" '
+  $0 == start { skip=1; next }
+  $0 == end { skip=0; next }
+  skip != 1 { print }
+' "${CADDYFILE_PATH}" > "${tmp_file}"
+
+cat >> "${tmp_file}" <<EOF
+
+${MANAGED_START}
+${DOMAIN} {
+	encode gzip zstd
+	reverse_proxy 127.0.0.1:${WITNESS_PORT}
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options SAMEORIGIN
+	}
+}
+${MANAGED_END}
+EOF
+
+docker run --rm -v "${tmp_file}:/tmp/Caddyfile:ro" caddy:2.10-alpine caddy validate --config /tmp/Caddyfile
+cp "${CADDYFILE_PATH}" "${CADDYFILE_PATH}.bak.$(date +%Y%m%d%H%M%S)"
+cp "${tmp_file}" "${CADDYFILE_PATH}"

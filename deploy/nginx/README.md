@@ -1,9 +1,10 @@
 # Deployment Notes
 
-The GitHub Actions workflow provisions Nginx directly on the VPS and generates the active site config at deploy time.
+The GitHub Actions workflow deploys Witness as a dedicated static container behind the shared VPS Caddy instance.
 
 - Domain: `witness.dailyturning.com`
 - Site root: `/var/www/witness`
-- SSL: Let's Encrypt via `certbot --nginx`
+- App runtime: `nginx:alpine` on `127.0.0.1:18080`
+- Edge TLS and routing: shared `perfect-pitch-caddy-1` container
 
-The files in `deploy/scripts/` are the source of truth for server provisioning and release deployment.
+The files in `deploy/scripts/` are the source of truth for Caddy registration and release deployment.
