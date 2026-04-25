@@ -74,6 +74,38 @@ The repository includes:
 
 - `Dockerfile` for containerized deployment
 - `nginx.conf` for serving the built application
+- `.github/workflows/ci-cd.yml` for CI/CD to the production VPS
+- `deploy/scripts/` for server provisioning and release deployment
+
+### Production Target
+
+- Domain: `https://witness.dailyturning.com`
+- Server root: `/var/www/witness`
+- Release strategy: timestamped releases with `current` symlink switching
+- SSL: Let's Encrypt, provisioned automatically during deploy
+
+### Required GitHub Secrets
+
+Add these repository secrets before running the deploy workflow:
+
+- `VPS_HOST`
+- `VPS_USER`
+- `VPS_PASSWORD`
+- `LETSENCRYPT_EMAIL`
+
+### Deployment Behavior
+
+On each push to `main`, GitHub Actions:
+
+1. Installs dependencies and runs the production build
+2. Uploads the generated `dist/` artifact
+3. Connects to the VPS over SSH
+4. Installs or verifies `nginx` and `certbot`
+5. Configures the `witness.dailyturning.com` server block
+6. Requests and attaches the SSL certificate if it does not exist yet
+7. Publishes a new timestamped release and repoints `current`
+
+For SSL issuance to succeed, DNS for `witness.dailyturning.com` must already point to the VPS and ports `80` and `443` must be reachable from the internet.
 
 ## Roadmap Direction
 

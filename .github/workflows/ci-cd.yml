@@ -1,0 +1,92 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: witness-production
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  DOMAIN: witness.dailyturning.com
+  SITE_ROOT: /var/www/witness
+
+jobs:
+  ci:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: witness-dist
+          path: dist
+          if-no-files-found: error
+
+  deploy:
+    name: Deploy To VPS
+    runs-on: ubuntu-latest
+    needs: ci
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://witness.dailyturning.com
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: witness-dist
+          path: dist
+
+      - name: Install SSH client tools
+        run: sudo apt-get update && sudo apt-get install -y sshpass openssh-client rsync
+
+      - name: Compute release name
+        id: release
+        run: echo "name=$(date +%Y%m%d%H%M%S)-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload deployment bundle
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PASSWORD: ${{ secrets.VPS_PASSWORD }}
+        run: |
+          sshpass -p "$VPS_PASSWORD" ssh -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "mkdir -p /tmp/witness-deploy"
+          sshpass -p "$VPS_PASSWORD" scp -o StrictHostKeyChecking=no -r dist deploy "$VPS_USER@$VPS_HOST:/tmp/witness-deploy/"
+
+      - name: Provision VPS and deploy release
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PASSWORD: ${{ secrets.VPS_PASSWORD }}
+          LETSENCRYPT_EMAIL: ${{ secrets.LETSENCRYPT_EMAIL }}
+          RELEASE_NAME: ${{ steps.release.outputs.name }}
+        run: |
+          EMAIL="${LETSENCRYPT_EMAIL:-admin@${DOMAIN}}"
+          sshpass -p "$VPS_PASSWORD" ssh -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" \
+            "bash /tmp/witness-deploy/deploy/scripts/provision_server.sh '$DOMAIN' '$SITE_ROOT' '$EMAIL' && \
+             bash /tmp/witness-deploy/deploy/scripts/deploy_release.sh '$SITE_ROOT' '$RELEASE_NAME' '/tmp/witness-deploy/dist'"
