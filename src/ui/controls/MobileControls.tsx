@@ -15,7 +15,7 @@ type MobileControlsProps = {
 type VirtualJoystickProps = {
   label: string;
   className?: string;
-  axis: "both" | "horizontal";
+  axis: "both" | "horizontal" | "cardinal";
   activeControlPointersRef: React.MutableRefObject<Set<number>>;
   onChange: (value: StickVector) => void;
 };
@@ -78,7 +78,7 @@ export function MobileControls({
 
       <VirtualJoystick
         label="Turn"
-        axis="both"
+        axis="cardinal"
         className="mobile-joystick--turn"
         activeControlPointersRef={activeControlPointersRef}
         onChange={({ x, y }) => onCameraTurn(x, y)}
@@ -112,6 +112,14 @@ function VirtualJoystick({
       const scale = JOYSTICK_RADIUS / distance;
       offsetX *= scale;
       offsetY *= scale;
+    }
+
+    if (axis === "cardinal") {
+      if (Math.abs(offsetX) >= Math.abs(offsetY)) {
+        offsetY = 0;
+      } else {
+        offsetX = 0;
+      }
     }
 
     const normalizedX = applyDeadZone(offsetX / JOYSTICK_RADIUS);
