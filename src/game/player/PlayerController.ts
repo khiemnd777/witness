@@ -19,8 +19,10 @@ export class PlayerController {
   private mesh: TransformNode;
   private camera: ArcRotateCamera;
   private occlusionOutlines: Array<{ source: Mesh; outline: Mesh }> = [];
-  private speed = 4.2;
-  private radius = 0.28;
+  private speed = 3.3;
+  private cameraTurnSpeed = 2.4;
+  private cameraTiltSpeed = 1.35;
+  private radius = 0.22;
   private walkTime = 0;
   private bounds: MovementBounds = {
     minX: -13,
@@ -41,7 +43,7 @@ export class PlayerController {
       position: startPosition,
       tunicColor: new Color3(0.19, 0.32, 0.46),
       headCoverColor: new Color3(0.73, 0.68, 0.58),
-      scale: 0.72
+      scale: 0.56
     });
 
     this.camera = new ArcRotateCamera(
@@ -77,6 +79,7 @@ export class PlayerController {
   }
 
   update(deltaSeconds: number) {
+    this.updateCameraTurn(deltaSeconds);
     const movement = this.getCameraRelativeMovement();
 
     if (movement.lengthSquared() > 0) {
@@ -118,13 +121,28 @@ export class PlayerController {
   private getCameraRelativeMovement() {
     const { forward, right } = this.getCameraBasis();
     const movement = new Vector3(0, 0, 0);
+    const virtualMovement = this.input.getVirtualMovement();
 
     if (this.input.isPressed("moveForward")) movement.addInPlace(forward);
     if (this.input.isPressed("moveBackward")) movement.subtractInPlace(forward);
     if (this.input.isPressed("moveRight")) movement.addInPlace(right);
     if (this.input.isPressed("moveLeft")) movement.subtractInPlace(right);
+    if (virtualMovement.y !== 0) movement.addInPlace(forward.scale(virtualMovement.y));
+    if (virtualMovement.x !== 0) movement.addInPlace(right.scale(virtualMovement.x));
 
     return movement;
+  }
+
+  private updateCameraTurn(deltaSeconds: number) {
+    const cameraTurn = this.input.getVirtualCameraTurn();
+    if (cameraTurn.x === 0 && cameraTurn.y === 0) return;
+
+    this.camera.alpha += cameraTurn.x * this.cameraTurnSpeed * deltaSeconds;
+    this.camera.beta = this.clamp(
+      this.camera.beta - cameraTurn.y * this.cameraTiltSpeed * deltaSeconds,
+      this.camera.lowerBetaLimit ?? Math.PI / 4.2,
+      this.camera.upperBetaLimit ?? Math.PI / 2.25
+    );
   }
 
   private createPlayerOcclusionOutline() {
@@ -181,6 +199,7 @@ export class PlayerController {
         mesh.isVisible &&
         mesh.isPickable &&
         Boolean(mesh.metadata?.isBuildingMesh) &&
+        !mesh.metadata?.isBuildingRoof &&
         !this.isPlayerMesh(mesh) &&
         !mesh.metadata?.isPlayerOcclusionOverlay,
       false
@@ -253,5 +272,9 @@ export class PlayerController {
 
   private lerp(from: number, to: number, amount: number) {
     return from + (to - from) * amount;
+  }
+
+  private clamp(value: number, min: number, max: number) {
+    return Math.max(min, Math.min(max, value));
   }
 }

@@ -21,7 +21,7 @@ import {
 } from "../physics/CollisionTypes";
 import { PlayerController } from "../player/PlayerController";
 import { LowPolyFactory } from "../visuals/LowPolyFactory";
-import type { BuildingVisual } from "../visuals/LowPolyFactory";
+import type { BuildingVisual, HumanoidAnimationParts } from "../visuals/LowPolyFactory";
 import type {
   ChapterScene,
   ChapterSceneCallbacks,
@@ -56,6 +56,30 @@ type InteriorObjectiveMarker = {
   node: TransformNode;
 };
 
+type GuidedCompanion = {
+  node: TransformNode;
+  start: Vector3;
+  destination: Vector3;
+  waypoints: Vector3[];
+  path: Vector3[];
+  waypointIndex: number;
+  speed: number;
+  walkTime: number;
+  animationParts?: HumanoidAnimationParts;
+};
+
+const GUIDING_STAR_START = new Vector3(0, 0, 9);
+const GUIDING_STAR_END = new Vector3(6.1, 0, -5.85);
+const GUIDING_STAR_PATH = [
+  GUIDING_STAR_START,
+  new Vector3(0.55, 0, 4.6),
+  new Vector3(0.2, 0, -0.7),
+  new Vector3(1.55, 0, -4.2),
+  new Vector3(4.2, 0, -7.95),
+  new Vector3(6.1, 0, -7.95),
+  GUIDING_STAR_END
+];
+
 export class BethlehemScene implements ChapterScene {
   scene: Scene;
   private player: PlayerController;
@@ -72,6 +96,10 @@ export class BethlehemScene implements ChapterScene {
   private nativityGroup: TransformNode | null = null;
   private infantJesusGroup: TransformNode | null = null;
   private infantHalo: TransformNode | null = null;
+  private guidingStarRoot: TransformNode | null = null;
+  private guidingStarGroundLight: TransformNode | null = null;
+  private guidingStarProgress = 0;
+  private guidedCompanions: GuidedCompanion[] = [];
   private shadowGenerator: ShadowGenerator | null = null;
   private visuals: LowPolyFactory;
   private markerPulseTime = 0;
@@ -93,6 +121,7 @@ export class BethlehemScene implements ChapterScene {
     this.createLighting();
     this.createEnvironment();
     this.createMarkers();
+    this.createGuidedCompanionPaths();
     this.player = new PlayerController(scene, input);
     this.player.setCollision(this.collisionBoxes, this.movementBounds);
     this.player.addToShadowGenerator(this.getShadowGenerator());
@@ -104,6 +133,7 @@ export class BethlehemScene implements ChapterScene {
     this.updateMarkerVisibility();
     this.animateInteractionMarks(deltaSeconds);
     this.animateInfantHalo(deltaSeconds);
+    this.animateGuidingStarAndCompanions(deltaSeconds);
     this.updateNearestInteraction();
   }
 
@@ -221,7 +251,8 @@ export class BethlehemScene implements ChapterScene {
 
     this.addShadowCaster(this.visuals.createCrate("marketCrate01", new Vector3(-4.1, 0, -6.8)));
     this.addShadowCaster(this.visuals.createCrate("marketCrate02", new Vector3(-7.7, 0, -4.2)));
-    this.addShadowCaster(this.visuals.createFence("stableFence", new Vector3(3.9, 0, -7.4), 5, 0.65));
+    this.addShadowCaster(this.visuals.createFence("stableFenceLeft", new Vector3(3.35, 0, -8.05), 3, 0.55));
+    this.addShadowCaster(this.visuals.createFence("stableFenceRight", new Vector3(7.35, 0, -8.05), 3, 0.55));
     this.collisionBoxes.push(createCollisionBox("marketCrate01", new Vector3(-4.1, 0, -6.8), 0.24, 0.24, 0.04));
     this.collisionBoxes.push(createCollisionBox("marketCrate02", new Vector3(-7.7, 0, -4.2), 0.24, 0.24, 0.04));
     this.createShepherdCamp();
@@ -460,6 +491,16 @@ export class BethlehemScene implements ChapterScene {
       });
       person.rotation.y = shepherd.rotation;
       this.addShepherdStaff(person, `shepherdCompanion${index}Staff`);
+      this.guidedCompanions.push({
+        node: person,
+        start: shepherd.position.clone(),
+        destination: new Vector3(4.6 + index * 0.5, 0, -8.42),
+        waypoints: [],
+        path: [],
+        waypointIndex: 0,
+        speed: 0.84,
+        walkTime: 0
+      });
       this.addShadowCaster(person);
       this.collisionBoxes.push(
         createCollisionBox(`shepherdCompanion${index}Collision`, shepherd.position, 0.28, 0.28, 0.12)
@@ -541,6 +582,19 @@ export class BethlehemScene implements ChapterScene {
       });
       person.rotation.y = wiseMan.rotation;
       this.addMagiAdornment(person, `magiCompanion${index}`, wiseMan.accent, wiseMan.crown);
+      this.guidedCompanions.push({
+        node: person,
+        start: wiseMan.position.clone(),
+        destination: new Vector3(6.55 + index * 0.48, 0, -8.45),
+        waypoints: [
+          new Vector3(8.2 + index * 0.35, 0, 7.25),
+          new Vector3(8.85 + index * 0.18, 0, 4.1)
+        ],
+        path: [],
+        waypointIndex: 0,
+        speed: 1.02,
+        walkTime: 0
+      });
       this.addShadowCaster(person);
       this.collisionBoxes.push(
         createCollisionBox(`magiCompanion${index}Collision`, wiseMan.position, 0.32, 0.32, 0.14)
@@ -563,6 +617,19 @@ export class BethlehemScene implements ChapterScene {
         scale: 0.62
       });
       person.rotation.y = attendant.rotation;
+      this.guidedCompanions.push({
+        node: person,
+        start: attendant.position.clone(),
+        destination: new Vector3(5.95 + index * 0.36, 0, -8.66 + (index % 2) * 0.18),
+        waypoints: [
+          new Vector3(8.0 + index * 0.18, 0, 7.05),
+          new Vector3(8.55 + index * 0.12, 0, 4.0)
+        ],
+        path: [],
+        waypointIndex: 0,
+        speed: 0.94,
+        walkTime: 0
+      });
       this.addShadowCaster(person);
       this.collisionBoxes.push(
         createCollisionBox(`magiAttendant${index}Collision`, attendant.position, 0.26, 0.26, 0.1)
@@ -729,28 +796,46 @@ export class BethlehemScene implements ChapterScene {
     this.nativityGroup.setEnabled(false);
     this.infantJesusGroup = this.createInfantJesusGroup();
     this.infantJesusGroup.setEnabled(false);
+    this.guidingStarRoot = this.createGuidingStar();
+    this.guidingStarRoot.setEnabled(false);
   }
 
   private updateWorldStateVisuals() {
     const stablePrepared = this.worldStateIds.has("stable_prepared");
+    const isStarGuiding = this.worldStateIds.has("star_guiding_to_manger");
     this.preparedStableBlanket?.setEnabled(stablePrepared);
     this.nativityGroup?.setEnabled(this.worldStateIds.has("travelers_led_to_stable"));
     this.infantJesusGroup?.setEnabled(this.worldStateIds.has("infant_jesus_born"));
+    this.guidingStarRoot?.setEnabled(isStarGuiding);
+
+    if (!isStarGuiding) {
+      this.guidingStarProgress = 0;
+      this.guidingStarRoot?.position.copyFrom(GUIDING_STAR_START);
+      for (const companion of this.guidedCompanions) {
+        companion.node.position.copyFrom(companion.start);
+        companion.waypointIndex = 0;
+        companion.walkTime = 0;
+        this.animateGuidedCompanionWalk(companion, 0, false);
+      }
+    }
   }
 
   private createNativityGroup() {
     const root = new TransformNode("nativityGroup", this.scene);
+    const infantPosition = new Vector3(6.0, 0, -5.78);
 
     const mary = this.visuals.createHumanoid({
       name: "maryFigure",
       position: new Vector3(5.15, 0, -5.45),
       tunicColor: new Color3(0.22, 0.34, 0.58),
       headCoverColor: new Color3(0.86, 0.79, 0.66),
-      scale: 0.62
+      scale: 0.62,
+      showBelt: false
     });
-    mary.rotation.y = Math.PI * 0.32;
+    mary.rotation.y = this.rotationToward(mary.position, infantPosition);
     mary.parent = root;
     this.addShawl(mary, "maryShawl", new Color3(0.12, 0.22, 0.44));
+    this.addMaryHeadCovering(mary);
 
     const joseph = this.visuals.createHumanoid({
       name: "josephFigure",
@@ -759,7 +844,7 @@ export class BethlehemScene implements ChapterScene {
       headCoverColor: new Color3(0.73, 0.64, 0.48),
       scale: 0.66
     });
-    joseph.rotation.y = -Math.PI * 0.36;
+    joseph.rotation.y = this.rotationToward(joseph.position, infantPosition);
     joseph.parent = root;
     this.addShepherdStaff(joseph, "josephStaff");
 
@@ -776,20 +861,165 @@ export class BethlehemScene implements ChapterScene {
     return root;
   }
 
+  private createGuidingStar() {
+    const root = new TransformNode("guidingStarRoot", this.scene);
+    root.position = GUIDING_STAR_START.clone();
+    this.createStarVisual("guidingStarVisual", root);
+
+    const lightMaterial = new StandardMaterial("guidingStarGroundLightMaterial", this.scene);
+    lightMaterial.diffuseColor = new Color3(1, 0.84, 0.24);
+    lightMaterial.emissiveColor = new Color3(1, 0.62, 0.08);
+    lightMaterial.alpha = 0.34;
+    lightMaterial.specularColor = Color3.Black();
+
+    const groundLight = MeshBuilder.CreateDisc(
+      "guidingStarGroundLight",
+      { radius: 1.35, tessellation: 64 },
+      this.scene
+    );
+    groundLight.rotation.x = Math.PI / 2;
+    groundLight.position = new Vector3(0, 0.025, 0);
+    groundLight.material = lightMaterial;
+    groundLight.metadata = {
+      ...(groundLight.metadata ?? {}),
+      isStarLightShadow: true,
+      baseScale: 1,
+      arrivedScale: 2.65
+    };
+    groundLight.parent = root;
+    this.guidingStarGroundLight = groundLight;
+
+    return root;
+  }
+
   private addShawl(parent: TransformNode, name: string, color: Color3) {
     const material = new StandardMaterial(`${name}Material`, this.scene);
     material.diffuseColor = color;
     material.specularColor = Color3.Black();
+    material.backFaceCulling = false;
 
-    const shawl = MeshBuilder.CreateBox(
+    const shawl = MeshBuilder.CreateRibbon(
       name,
-      { width: 0.52, height: 0.55, depth: 0.06 },
+      {
+        pathArray: [
+          [
+            new Vector3(-0.28, 1.23, -0.24),
+            new Vector3(-0.24, 0.98, -0.29),
+            new Vector3(-0.17, 0.76, -0.25)
+          ],
+          [
+            new Vector3(0, 1.3, -0.28),
+            new Vector3(0, 0.98, -0.34),
+            new Vector3(0, 0.7, -0.29)
+          ],
+          [
+            new Vector3(0.28, 1.23, -0.24),
+            new Vector3(0.24, 0.98, -0.29),
+            new Vector3(0.17, 0.76, -0.25)
+          ]
+        ],
+        sideOrientation: Mesh.DOUBLESIDE
+      },
       this.scene
     );
-    shawl.position = new Vector3(0, 1.02, -0.31);
-    shawl.rotation.z = 0.04;
     shawl.material = material;
     shawl.parent = parent;
+  }
+
+  private addMaryHeadCovering(parent: TransformNode) {
+    const defaultCover = parent.getChildMeshes(false).find((mesh) => mesh.name === "maryFigureHeadCover");
+    if (defaultCover) {
+      defaultCover.scaling = new Vector3(0.82, 0.46, 0.92);
+      defaultCover.position.y = 1.62;
+    }
+
+    const hairMaterial = new StandardMaterial("maryLongHairMaterial", this.scene);
+    hairMaterial.diffuseColor = new Color3(0.16, 0.09, 0.045);
+    hairMaterial.specularColor = Color3.Black();
+
+    const veilMaterial = new StandardMaterial("maryVeilMaterial", this.scene);
+    veilMaterial.diffuseColor = new Color3(0.86, 0.78, 0.64);
+    veilMaterial.specularColor = Color3.Black();
+    veilMaterial.backFaceCulling = false;
+
+    const hairStrands = [
+      { x: -0.16, z: -0.18, height: 0.52, tilt: 0.1 },
+      { x: 0, z: -0.23, height: 0.58, tilt: 0 },
+      { x: 0.16, z: -0.18, height: 0.52, tilt: -0.1 }
+    ];
+
+    for (const [index, strand] of hairStrands.entries()) {
+      const hair = MeshBuilder.CreateCylinder(
+        `maryLongHairStrand${index}`,
+        { height: strand.height, diameterTop: 0.08, diameterBottom: 0.12, tessellation: 7 },
+        this.scene
+      );
+      hair.position = new Vector3(strand.x, 1.22, strand.z);
+      hair.rotation.z = strand.tilt;
+      hair.material = hairMaterial;
+      hair.parent = parent;
+    }
+
+    const veilCap = MeshBuilder.CreateSphere(
+      "maryVeilTop",
+      { diameter: 0.56, segments: 12 },
+      this.scene
+    );
+    veilCap.position = new Vector3(0, 1.6, -0.05);
+    veilCap.scaling = new Vector3(0.88, 0.34, 0.72);
+    veilCap.material = veilMaterial;
+    veilCap.parent = parent;
+
+    const veilBack = MeshBuilder.CreateRibbon(
+      "maryVeilBack",
+      {
+        pathArray: [
+          [
+            new Vector3(-0.3, 1.54, -0.14),
+            new Vector3(-0.34, 1.22, -0.22),
+            new Vector3(-0.24, 0.93, -0.24)
+          ],
+          [
+            new Vector3(0, 1.64, -0.18),
+            new Vector3(0, 1.2, -0.31),
+            new Vector3(0, 0.84, -0.31)
+          ],
+          [
+            new Vector3(0.3, 1.54, -0.14),
+            new Vector3(0.34, 1.22, -0.22),
+            new Vector3(0.24, 0.93, -0.24)
+          ]
+        ],
+        sideOrientation: Mesh.DOUBLESIDE
+      },
+      this.scene
+    );
+    veilBack.material = veilMaterial;
+    veilBack.parent = parent;
+
+    for (const side of [-1, 1]) {
+      const veilSide = MeshBuilder.CreateRibbon(
+        `maryVeilSide${side}`,
+        {
+          pathArray: [
+            [
+              new Vector3(side * 0.22, 1.52, -0.02),
+              new Vector3(side * 0.28, 1.23, -0.04),
+              new Vector3(side * 0.2, 0.96, -0.08)
+            ],
+            [
+              new Vector3(side * 0.08, 1.48, 0.02),
+              new Vector3(side * 0.13, 1.18, 0.0),
+              new Vector3(side * 0.1, 0.98, -0.04)
+            ]
+          ],
+          sideOrientation: Mesh.DOUBLESIDE
+        },
+        this.scene
+      );
+      veilSide.material = veilMaterial;
+      veilSide.parent = parent;
+    }
   }
 
   private createMangerWithInfant(name: string, position: Vector3) {
@@ -912,6 +1142,279 @@ export class BethlehemScene implements ChapterScene {
     if (!this.infantHalo || !this.infantHalo.isEnabled()) return;
     this.infantHalo.rotation.y += deltaSeconds * 0.95;
     this.infantHalo.rotation.z += deltaSeconds * 0.22;
+  }
+
+  private animateGuidingStarAndCompanions(deltaSeconds: number) {
+    if (!this.guidingStarRoot?.isEnabled()) return;
+    this.ensureGuidedCompanionPaths();
+
+    this.guidingStarProgress = Math.min(1, this.guidingStarProgress + deltaSeconds * 0.045);
+    const easedProgress = this.easeInOut(this.guidingStarProgress);
+    const pathPosition = this.sampleGuidingStarPath(easedProgress);
+    const hasArrived = this.guidingStarProgress >= 1;
+    const hover = hasArrived ? 0 : Math.sin(this.markerPulseTime * 1.05) * 0.32;
+    this.guidingStarRoot.position = new Vector3(pathPosition.x, 0, pathPosition.z);
+
+    const star = this.guidingStarRoot.getChildTransformNodes(false).find((child) =>
+      this.isStarVisualRoot(child)
+    );
+    if (star) {
+      const baseScale = Number(star.metadata?.baseScale ?? 1);
+      const baseY = Number(star.metadata?.baseY ?? star.position.y);
+      const pulse = hasArrived
+        ? 1.18 + Math.sin(this.markerPulseTime * 1.2) * 0.04
+        : 1 + Math.sin(this.markerPulseTime * 1.6) * 0.12;
+      star.position.y = baseY + hover;
+      star.scaling.setAll(baseScale * pulse);
+      if (!hasArrived) {
+        star.rotation.z += deltaSeconds * 0.18;
+      }
+    }
+
+    if (this.guidingStarGroundLight) {
+      const baseScale = hasArrived
+        ? Number(this.guidingStarGroundLight.metadata?.arrivedScale ?? 2.65)
+        : Number(this.guidingStarGroundLight.metadata?.baseScale ?? 1);
+      const glowScale = baseScale * (1 + Math.sin(this.markerPulseTime * 1.25) * (hasArrived ? 0.08 : 0.18));
+      this.guidingStarGroundLight.scaling.set(glowScale, glowScale, glowScale);
+    }
+
+    for (const companion of this.guidedCompanions) {
+      const target = companion.path[companion.waypointIndex];
+      if (!target) {
+        this.animateGuidedCompanionWalk(companion, deltaSeconds, false);
+        continue;
+      }
+      const toTarget = target.subtract(companion.node.position);
+      toTarget.y = 0;
+      const distance = toTarget.length();
+      if (distance < 0.08) {
+        companion.waypointIndex += 1;
+        this.animateGuidedCompanionWalk(companion, deltaSeconds, false);
+        continue;
+      }
+      const step = Math.min(distance, companion.speed * deltaSeconds);
+      const direction = toTarget.normalize();
+      const nextPosition = companion.node.position.add(direction.scale(step));
+      if (this.isPositionInsideBlockingCollision(nextPosition)) {
+        companion.waypointIndex += 1;
+        this.animateGuidedCompanionWalk(companion, deltaSeconds, false);
+        continue;
+      }
+      companion.node.position.copyFrom(nextPosition);
+      companion.node.rotation.y = Math.atan2(direction.x, direction.z);
+      this.animateGuidedCompanionWalk(companion, deltaSeconds, true);
+    }
+  }
+
+  private animateGuidedCompanionWalk(companion: GuidedCompanion, deltaSeconds: number, isMoving: boolean) {
+    const parts = companion.animationParts ?? this.findHumanoidAnimationParts(companion.node);
+    if (!parts) return;
+    companion.animationParts = parts;
+
+    if (isMoving) {
+      companion.walkTime += deltaSeconds * (7.2 + companion.speed * 1.8);
+    }
+
+    const swing = isMoving ? Math.sin(companion.walkTime) * 0.42 : 0;
+    const returnSpeed = isMoving ? 1 : Math.min(1, deltaSeconds * 8);
+
+    parts.leftArm.rotation.x = this.lerp(parts.leftArm.rotation.x, swing, returnSpeed);
+    parts.rightArm.rotation.x = this.lerp(parts.rightArm.rotation.x, -swing, returnSpeed);
+    parts.leftLeg.rotation.x = this.lerp(parts.leftLeg.rotation.x, -swing * 0.72, returnSpeed);
+    parts.rightLeg.rotation.x = this.lerp(parts.rightLeg.rotation.x, swing * 0.72, returnSpeed);
+  }
+
+  private findHumanoidAnimationParts(node: TransformNode) {
+    const ownParts = node.metadata?.humanoidParts as HumanoidAnimationParts | undefined;
+    if (ownParts) return ownParts;
+
+    for (const child of node.getChildTransformNodes(false)) {
+      const childParts = child.metadata?.humanoidParts as HumanoidAnimationParts | undefined;
+      if (childParts) return childParts;
+    }
+
+    return undefined;
+  }
+
+  private createGuidedCompanionPaths() {
+    for (const companion of this.guidedCompanions) {
+      this.createGuidedCompanionPath(companion);
+      companion.waypointIndex = 0;
+    }
+  }
+
+  private ensureGuidedCompanionPaths() {
+    for (const companion of this.guidedCompanions) {
+      if (companion.path.length > 0) continue;
+      this.createGuidedCompanionPath(companion);
+      companion.waypointIndex = 0;
+    }
+  }
+
+  private createGuidedCompanionPath(companion: GuidedCompanion) {
+    const routePoints = [companion.start, ...companion.waypoints, companion.destination];
+    const path: Vector3[] = [];
+    for (let index = 0; index < routePoints.length - 1; index += 1) {
+      path.push(...this.findPath(routePoints[index], routePoints[index + 1]));
+    }
+    companion.path = path;
+  }
+
+  private findPath(start: Vector3, goal: Vector3) {
+    const cellSize = 0.75;
+    const toCell = (position: Vector3) => ({
+      x: Math.round(position.x / cellSize),
+      z: Math.round(position.z / cellSize)
+    });
+    const toWorld = (cell: { x: number; z: number }) => new Vector3(cell.x * cellSize, 0, cell.z * cellSize);
+    const keyOf = (cell: { x: number; z: number }) => `${cell.x}:${cell.z}`;
+    const startCell = toCell(start);
+    const goalCell = toCell(goal);
+    const minX = Math.floor(this.movementBounds.minX / cellSize);
+    const maxX = Math.ceil(this.movementBounds.maxX / cellSize);
+    const minZ = Math.floor(this.movementBounds.minZ / cellSize);
+    const maxZ = Math.ceil(this.movementBounds.maxZ / cellSize);
+    const open = new Set([keyOf(startCell)]);
+    const cameFrom = new Map<string, string>();
+    const cells = new Map<string, { x: number; z: number }>([[keyOf(startCell), startCell]]);
+    const gScore = new Map<string, number>([[keyOf(startCell), 0]]);
+    const fScore = new Map<string, number>([
+      [keyOf(startCell), this.pathHeuristic(startCell, goalCell)]
+    ]);
+    const directions = [
+      { x: 1, z: 0 },
+      { x: -1, z: 0 },
+      { x: 0, z: 1 },
+      { x: 0, z: -1 },
+      { x: 1, z: 1 },
+      { x: 1, z: -1 },
+      { x: -1, z: 1 },
+      { x: -1, z: -1 }
+    ];
+
+    while (open.size > 0) {
+      const currentKey = Array.from(open).reduce((best, candidate) =>
+        (fScore.get(candidate) ?? Infinity) < (fScore.get(best) ?? Infinity) ? candidate : best
+      );
+      const current = cells.get(currentKey);
+      if (!current) break;
+      if (current.x === goalCell.x && current.z === goalCell.z) {
+        return this.simplifyPath(this.reconstructPath(currentKey, cameFrom, cells).map(toWorld), goal);
+      }
+
+      open.delete(currentKey);
+      for (const direction of directions) {
+        const neighbor = { x: current.x + direction.x, z: current.z + direction.z };
+        if (neighbor.x < minX || neighbor.x > maxX || neighbor.z < minZ || neighbor.z > maxZ) continue;
+        if (this.isPositionInsidePathObstacle(toWorld(neighbor))) continue;
+        const neighborKey = keyOf(neighbor);
+        cells.set(neighborKey, neighbor);
+        const movementCost = direction.x !== 0 && direction.z !== 0 ? 1.4 : 1;
+        const tentativeGScore = (gScore.get(currentKey) ?? Infinity) + movementCost;
+        if (tentativeGScore >= (gScore.get(neighborKey) ?? Infinity)) continue;
+        cameFrom.set(neighborKey, currentKey);
+        gScore.set(neighborKey, tentativeGScore);
+        fScore.set(neighborKey, tentativeGScore + this.pathHeuristic(neighbor, goalCell));
+        open.add(neighborKey);
+      }
+    }
+
+    return [goal.clone()];
+  }
+
+  private reconstructPath(
+    currentKey: string,
+    cameFrom: Map<string, string>,
+    cells: Map<string, { x: number; z: number }>
+  ) {
+    const path: Array<{ x: number; z: number }> = [];
+    let cursor: string | undefined = currentKey;
+    while (cursor) {
+      const cell = cells.get(cursor);
+      if (cell) path.unshift(cell);
+      cursor = cameFrom.get(cursor);
+    }
+    return path.slice(1);
+  }
+
+  private simplifyPath(path: Vector3[], goal: Vector3) {
+    const simplified: Vector3[] = [];
+    let previousDirection = "";
+    for (let index = 0; index < path.length; index += 1) {
+      const previous = index === 0 ? path[index] : path[index - 1];
+      const current = path[index];
+      const next = path[index + 1];
+      const direction = next
+        ? `${Math.sign(next.x - current.x)}:${Math.sign(next.z - current.z)}`
+        : "end";
+      if (index === path.length - 1 || direction !== previousDirection) {
+        simplified.push(current);
+      }
+      previousDirection = `${Math.sign(current.x - previous.x)}:${Math.sign(current.z - previous.z)}`;
+    }
+    simplified.push(goal.clone());
+    return simplified;
+  }
+
+  private pathHeuristic(a: { x: number; z: number }, b: { x: number; z: number }) {
+    return Math.hypot(a.x - b.x, a.z - b.z);
+  }
+
+  private sampleGuidingStarPath(progress: number) {
+    const clampedProgress = Math.max(0, Math.min(1, progress));
+    const segmentCount = GUIDING_STAR_PATH.length - 1;
+    const scaled = clampedProgress * segmentCount;
+    const segmentIndex = Math.min(segmentCount - 1, Math.floor(scaled));
+    const segmentProgress = scaled - segmentIndex;
+    return Vector3.Lerp(
+      GUIDING_STAR_PATH[segmentIndex],
+      GUIDING_STAR_PATH[segmentIndex + 1],
+      segmentProgress
+    );
+  }
+
+  private easeInOut(value: number) {
+    return value * value * (3 - 2 * value);
+  }
+
+  private isPositionInsideBlockingCollision(position: Vector3) {
+    return this.collisionBoxes.some((box) => {
+      if (this.isIgnoredPathObstacle(box)) return false;
+      return (
+        position.x > box.minX &&
+        position.x < box.maxX &&
+        position.z > box.minZ &&
+        position.z < box.maxZ
+      );
+    });
+  }
+
+  private isPositionInsidePathObstacle(position: Vector3) {
+    const clearance = 0.22;
+    return this.collisionBoxes.some((box) => {
+      if (this.isIgnoredPathObstacle(box)) return false;
+      return (
+        position.x > box.minX - clearance &&
+        position.x < box.maxX + clearance &&
+        position.z > box.minZ - clearance &&
+        position.z < box.maxZ + clearance
+      );
+    });
+  }
+
+  private isIgnoredPathObstacle(box: CollisionBox) {
+    return !this.isBuildingWallCollision(box);
+  }
+
+  private isBuildingWallCollision(box: CollisionBox) {
+    return (
+      box.id.endsWith("BackWall") ||
+      box.id.endsWith("LeftWall") ||
+      box.id.endsWith("RightWall") ||
+      box.id.endsWith("FrontLeftWall") ||
+      box.id.endsWith("FrontRightWall")
+    );
   }
 
   private createBuilding(name: string, position: Vector3, scaling: Vector3, color: Color3) {
@@ -1117,6 +1620,15 @@ export class BethlehemScene implements ChapterScene {
         targetId: "star_viewpoint",
         position: new Vector3(0, 0, 9),
         color: new Color3(0.98, 0.92, 0.38)
+      },
+      {
+        id: "star_guided_stable",
+        label: "Follow the star to the manger",
+        type: "location",
+        targetId: "star_guided_stable",
+        interiorZoneId: "stable",
+        position: new Vector3(6.1, 0, -6.45),
+        color: new Color3(1, 0.88, 0.32)
       }
     ];
 
@@ -1172,6 +1684,33 @@ export class BethlehemScene implements ChapterScene {
       this.collisionBoxes.push(
         createCollisionBox(`${config.id}Collision`, config.position, 0.32, 0.32, 0.18)
       );
+      if (config.id === "npc_shepherd") {
+        this.guidedCompanions.push({
+          node: root,
+          start: config.position.clone(),
+          destination: new Vector3(4.25, 0, -8.58),
+          waypoints: [],
+          path: [],
+          waypointIndex: 0,
+          speed: 0.82,
+          walkTime: 0
+        });
+      }
+      if (config.id === "npc_magi") {
+        this.guidedCompanions.push({
+          node: root,
+          start: config.position.clone(),
+          destination: new Vector3(7.72, 0, -8.38),
+          waypoints: [
+            new Vector3(8.75, 0, 7.4),
+            new Vector3(9.1, 0, 4.15)
+          ],
+          path: [],
+          waypointIndex: 0,
+          speed: 1.0,
+          walkTime: 0
+        });
+      }
       return root;
     }
 
@@ -1221,7 +1760,9 @@ export class BethlehemScene implements ChapterScene {
     root.metadata = {
       ...(root.metadata ?? {}),
       isStarVisual: true,
-      baseScale: root.scaling.x
+      isStarVisualRoot: true,
+      baseScale: root.scaling.x,
+      baseY: root.position.y
     };
     root.parent = parent;
 
@@ -1344,6 +1885,7 @@ export class BethlehemScene implements ChapterScene {
 
     for (const marker of this.markers) {
       if (!this.isInteractionActive(marker.interaction)) continue;
+      if (!this.isInteractionUnlocked(marker.interaction)) continue;
       const distance = Vector3.Distance(playerPosition, marker.node.position);
       if (distance < nearestDistance) {
         objective = marker;
@@ -1484,11 +2026,15 @@ export class BethlehemScene implements ChapterScene {
     return Boolean(node.metadata?.isStarVisual);
   }
 
+  private isStarVisualRoot(node: TransformNode) {
+    return Boolean(node.metadata?.isStarVisualRoot);
+  }
+
   private getStarVisuals() {
     const visuals: TransformNode[] = [];
     for (const marker of this.markers) {
       for (const child of marker.node.getChildTransformNodes(false)) {
-        if (this.isStarVisual(child)) visuals.push(child);
+        if (this.isStarVisualRoot(child)) visuals.push(child);
       }
     }
     return visuals;
@@ -1538,6 +2084,8 @@ export class BethlehemScene implements ChapterScene {
       const hasHiddenInteriorTarget = this.markers.some(({ interaction }) =>
         interaction.interiorZoneId === objectiveMarker.zoneId &&
         this.isInteractionActive(interaction) &&
+        this.isInteractionUnlocked(interaction) &&
+        !this.isCollectedItemInteraction(interaction) &&
         playerInteriorZoneId !== objectiveMarker.zoneId
       );
       objectiveMarker.node.setEnabled(hasHiddenInteriorTarget);
@@ -1546,8 +2094,15 @@ export class BethlehemScene implements ChapterScene {
 
   private isInteractionVisible(interaction: SceneInteraction) {
     if (!this.isInteractionActive(interaction)) return false;
+    if (!this.isInteractionUnlocked(interaction)) return false;
     if (this.isCollectedItemInteraction(interaction)) return false;
     return this.isInteriorInteractionAvailable(interaction);
+  }
+
+  private isInteractionUnlocked(interaction: SceneInteraction) {
+    if (interaction.id !== "star_guided_stable") return true;
+    if (!this.worldStateIds.has("star_guiding_to_manger")) return true;
+    return this.guidingStarProgress >= 1;
   }
 
   private isInteractionUsable(interaction: SceneInteraction) {
@@ -1578,5 +2133,13 @@ export class BethlehemScene implements ChapterScene {
       position.z >= zone.minZ &&
       position.z <= zone.maxZ
     );
+  }
+
+  private rotationToward(from: Vector3, to: Vector3) {
+    return Math.atan2(to.x - from.x, to.z - from.z);
+  }
+
+  private lerp(from: number, to: number, amount: number) {
+    return from + (to - from) * amount;
   }
 }

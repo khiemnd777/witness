@@ -13,5 +13,10 @@
     "id": "star_viewpoint",
     "label": "Star Viewpoint",
     "kind": "observe"
+  },
+  {
+    "id": "star_guided_stable",
+    "label": "Guiding Star",
+    "kind": "location"
   }
 ]

@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { loadChapterContent, loadChapterManifest } from "../content/loaders/contentLoader";
+import { ChapterMusic } from "../game/audio/ChapterMusic";
 import type { DialogueChoice } from "../game/dialogue/DialogueTypes";
 import { GameEngine } from "../game/engine/GameEngine";
 import { GameSession, type GameSessionSnapshot } from "../game/session/GameSession";
 import type { SceneInteraction } from "../game/scene/ChapterScene";
+import { MobileControls } from "../ui/controls/MobileControls";
 import { DialoguePanel } from "../ui/dialogue/DialoguePanel";
 import { Hud } from "../ui/hud/Hud";
 import { ToastStack } from "../ui/hud/ToastStack";
@@ -15,10 +17,12 @@ import { useGameStore } from "./store";
 export function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<GameEngine | null>(null);
+  const chapterMusicRef = useRef<ChapterMusic | null>(null);
   const pendingDialogueInteractionRef = useRef<SceneInteraction | null>(null);
   const [session, setSession] = useState<GameSession | null>(null);
   const [selectedChapterId, setSelectedChapterId] = useState("chapter_01");
   const [hasStarted, setHasStarted] = useState(false);
+  const [usesTouchControls, setUsesTouchControls] = useState(false);
 
   const {
     content,
@@ -74,6 +78,20 @@ export function App() {
       cancelled = true;
     };
   }, [setChapterManifest, setError]);
+
+  useEffect(() => {
+    const touchQuery = window.matchMedia("(pointer: coarse), (hover: none)");
+    const syncTouchControls = () => {
+      setUsesTouchControls(touchQuery.matches || navigator.maxTouchPoints > 0);
+    };
+
+    syncTouchControls();
+    touchQuery.addEventListener("change", syncTouchControls);
+
+    return () => {
+      touchQuery.removeEventListener("change", syncTouchControls);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,6 +159,19 @@ export function App() {
     engineRef.current?.setWorldStateIds(getWorldStateIds());
   }, [save]);
 
+  useEffect(() => {
+    if (!hasStarted || content?.chapter.id !== "chapter_01") {
+      chapterMusicRef.current?.stop();
+    }
+  }, [content?.chapter.id, hasStarted]);
+
+  useEffect(() => {
+    return () => {
+      chapterMusicRef.current?.dispose();
+      chapterMusicRef.current = null;
+    };
+  }, []);
+
   const getWorldStateIds = () => {
     if (!save) return [];
     const ids: string[] = [];
@@ -162,6 +193,12 @@ export function App() {
       save.completedQuestIds.includes("chapter_01_quest_04")
     ) {
       ids.push("infant_jesus_born");
+    }
+    if (
+      save.currentQuestCompletedStepIds.includes("observe_star") ||
+      save.completedQuestIds.includes("chapter_01_quest_03")
+    ) {
+      ids.push("star_guiding_to_manger");
     }
     return ids;
   };
@@ -222,18 +259,36 @@ export function App() {
     pendingDialogueInteractionRef.current = null;
   };
 
+  const startChapterMusic = () => {
+    if (!content) return;
+    if (content.chapter.id !== "chapter_01") return;
+    chapterMusicRef.current = chapterMusicRef.current ?? new ChapterMusic();
+    void chapterMusicRef.current.start().catch((reason: unknown) => {
+      console.warn("Chapter music could not start.", reason);
+    });
+  };
+
+  const stopChapterMusic = () => {
+    chapterMusicRef.current?.stop();
+  };
+
   const returnToMainMenu = () => {
     setHasStarted(false);
+    stopChapterMusic();
     setActiveDialogue(null);
+    setChapterComplete(false);
     pendingDialogueInteractionRef.current = null;
   };
 
   const selectChapter = (chapterId: string) => {
-    if (chapterId === selectedChapterId) return;
     setHasStarted(false);
+    stopChapterMusic();
+    setChapterComplete(false);
+    setActiveDialogue(null);
     engineRef.current?.dispose();
     engineRef.current = null;
     pendingDialogueInteractionRef.current = null;
+    if (chapterId === selectedChapterId) return;
     setSelectedChapterId(chapterId);
   };
 
@@ -253,14 +308,17 @@ export function App() {
           chapters={chapterManifest}
           selectedChapterId={selectedChapterId}
           onSelectChapter={selectChapter}
-          onStart={() => setHasStarted(true)}
+          onStart={() => {
+            setHasStarted(true);
+            startChapterMusic();
+          }}
           onReset={resetProgress}
         />
       )}
 
       <canvas ref={canvasRef} className="game-canvas" />
 
-      {hasStarted && (
+      {hasStarted && !chapterComplete && (
         <>
           <Hud
             chapter={content.chapter}
@@ -269,8 +327,17 @@ export function App() {
             nearestInteraction={nearestInteraction}
             objectiveHint={objectiveHint}
             currentStep={currentStep}
+            usesTouchControls={usesTouchControls}
           />
           <QuestTracker quest={activeQuest} currentStep={currentStep} />
+          {usesTouchControls && !activeDialogue && !chapterComplete && (
+            <MobileControls
+              nearestInteractionLabel={nearestInteraction?.label}
+              onMove={(x, y) => engineRef.current?.setVirtualMovement(x, y)}
+              onCameraTurn={(x, y) => engineRef.current?.setVirtualCameraTurn(x, y)}
+              onInteract={() => engineRef.current?.triggerInteract()}
+            />
+          )}
         </>
       )}
 

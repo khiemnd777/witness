@@ -86,6 +86,12 @@
         "type": "observe",
         "target": "star_viewpoint",
         "instruction": "Observe the star from the village edge."
+      },
+      {
+        "id": "follow_star_to_manger",
+        "type": "go_to",
+        "target": "star_guided_stable",
+        "instruction": "Follow the moving star toward the manger."
       }
     ],
     "rewards": {

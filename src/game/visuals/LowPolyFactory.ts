@@ -22,6 +22,7 @@ export type HumanoidOptions = {
   skinColor?: Color3;
   headCoverColor?: Color3;
   scale?: number;
+  showBelt?: boolean;
 };
 
 export type BuildingOptions = {
@@ -55,6 +56,8 @@ export class LowPolyFactory {
       options.headCoverColor ?? options.tunicColor.scale(0.72)
     );
     const sandal = this.material(`${options.name}Sandal`, new Color3(0.18, 0.11, 0.07));
+    const belt = this.material(`${options.name}Belt`, new Color3(0.82, 0.58, 0.24));
+    const buckle = this.material(`${options.name}Buckle`, new Color3(1.0, 0.82, 0.34));
 
     const body = MeshBuilder.CreateCylinder(
       `${options.name}Body`,
@@ -64,6 +67,26 @@ export class LowPolyFactory {
     body.position = new Vector3(0, 0.85, 0);
     body.material = tunic;
     body.parent = root;
+
+    if (options.showBelt !== false) {
+      const waistBelt = MeshBuilder.CreateCylinder(
+        `${options.name}WaistBelt`,
+        { height: 0.12, diameterTop: 0.6, diameterBottom: 0.67, tessellation: 6 },
+        this.scene
+      );
+      waistBelt.position = new Vector3(0, 0.76, 0);
+      waistBelt.material = belt;
+      waistBelt.parent = root;
+
+      const beltBuckle = MeshBuilder.CreateBox(
+        `${options.name}BeltBuckle`,
+        { width: 0.16, height: 0.11, depth: 0.035 },
+        this.scene
+      );
+      beltBuckle.position = new Vector3(0, 0.76, 0.34);
+      beltBuckle.material = buckle;
+      beltBuckle.parent = root;
+    }
 
     const head = MeshBuilder.CreateSphere(
       `${options.name}Head`,
@@ -350,7 +373,7 @@ export class LowPolyFactory {
     );
     roof.position = new Vector3(center.x, height + 0.08, center.z);
     roof.material = roofMaterial;
-    roof.metadata = { ...(roof.metadata ?? {}), isBuildingMesh: true };
+    roof.metadata = { ...(roof.metadata ?? {}), isBuildingMesh: true, isBuildingRoof: true };
     roof.parent = root;
 
     this.createWall(`${options.name}BackWall`, new Vector3(center.x, height / 2, center.z + depth / 2), width, height, thickness, wall, root);

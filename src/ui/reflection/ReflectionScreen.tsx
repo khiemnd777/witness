@@ -45,8 +45,8 @@ export function ReflectionScreen({
 
         <div className="stats-strip is-large">
           {Object.entries(stats).map(([stat, value]) => (
-            <span key={stat}>
-              {stat} <strong>{value}</strong>
+            <span className="stats-chip" key={stat}>
+              <span className="stat-name">{stat}</span> <strong>{value}</strong>
             </span>
           ))}
         </div>

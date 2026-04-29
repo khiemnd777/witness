@@ -66,6 +66,18 @@ export class GameEngine {
     this.sceneManager.setWorldStateIds(ids);
   }
 
+  setVirtualMovement(x: number, y: number) {
+    this.input.setVirtualMovement(x, y);
+  }
+
+  setVirtualCameraTurn(x: number, y: number) {
+    this.input.setVirtualCameraTurn(x, y);
+  }
+
+  triggerInteract() {
+    this.input.triggerInteract();
+  }
+
   private handleResize = () => {
     this.engine.resize();
   };
