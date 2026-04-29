@@ -101,6 +101,7 @@ export class BethlehemScene implements ChapterScene {
   private guidingStarProgress = 0;
   private guidedCompanions: GuidedCompanion[] = [];
   private shadowGenerator: ShadowGenerator | null = null;
+  private shadowsEnabled = true;
   private visuals: LowPolyFactory;
   private markerPulseTime = 0;
   private movementBounds: MovementBounds = {
@@ -117,6 +118,7 @@ export class BethlehemScene implements ChapterScene {
   ) {
     this.scene = scene;
     this.visuals = new LowPolyFactory(scene);
+    this.shadowsEnabled = !this.usesMobileRenderingProfile();
     this.scene.clearColor = new Color4(0.91, 0.78, 0.55, 1);
     this.createLighting();
     this.createEnvironment();
@@ -124,7 +126,9 @@ export class BethlehemScene implements ChapterScene {
     this.createGuidedCompanionPaths();
     this.player = new PlayerController(scene, input);
     this.player.setCollision(this.collisionBoxes, this.movementBounds);
-    this.player.addToShadowGenerator(this.getShadowGenerator());
+    if (this.shadowGenerator) {
+      this.player.addToShadowGenerator(this.shadowGenerator);
+    }
   }
 
   update(deltaSeconds: number) {
@@ -179,6 +183,8 @@ export class BethlehemScene implements ChapterScene {
     sun.shadowMinZ = 0.1;
     sun.shadowMaxZ = 90;
 
+    if (!this.shadowsEnabled) return;
+
     const shadowGenerator = new CascadedShadowGenerator(2048, sun);
     shadowGenerator.numCascades = 4;
     shadowGenerator.shadowMaxZ = 90;
@@ -198,10 +204,12 @@ export class BethlehemScene implements ChapterScene {
   }
 
   private addShadowReceiver(mesh: Mesh) {
+    if (!this.shadowsEnabled) return;
     mesh.receiveShadows = true;
   }
 
   private addShadowReceivers(node: TransformNode) {
+    if (!this.shadowsEnabled) return;
     const meshes = node instanceof Mesh ? [node, ...node.getChildMeshes(false)] : node.getChildMeshes(false);
     for (const mesh of meshes) {
       mesh.receiveShadows = true;
@@ -209,7 +217,8 @@ export class BethlehemScene implements ChapterScene {
   }
 
   private addShadowCaster(node: TransformNode) {
-    const shadowGenerator = this.getShadowGenerator();
+    const shadowGenerator = this.shadowGenerator;
+    if (!this.shadowsEnabled || !shadowGenerator) return;
     const meshes = node instanceof Mesh ? [node, ...node.getChildMeshes(false)] : node.getChildMeshes(false);
     for (const mesh of meshes) {
       if (this.isInteractionRing(mesh) || this.isItemMarker(mesh) || mesh.metadata?.isPlayerOcclusionOverlay) continue;
@@ -2137,6 +2146,13 @@ export class BethlehemScene implements ChapterScene {
 
   private rotationToward(from: Vector3, to: Vector3) {
     return Math.atan2(to.x - from.x, to.z - from.z);
+  }
+
+  private usesMobileRenderingProfile() {
+    return (
+      window.matchMedia("(pointer: coarse), (hover: none)").matches ||
+      navigator.maxTouchPoints > 0
+    );
   }
 
   private lerp(from: number, to: number, amount: number) {

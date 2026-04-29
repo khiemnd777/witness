@@ -19,6 +19,7 @@ export class PlayerController {
   private mesh: TransformNode;
   private camera: ArcRotateCamera;
   private occlusionOutlines: Array<{ source: Mesh; outline: Mesh }> = [];
+  private readonly defaultCameraRadius = 12;
   private speed = 3.3;
   private cameraTurnSpeed = 2.4;
   private cameraTiltSpeed = 1.35;
@@ -50,17 +51,23 @@ export class PlayerController {
       "thirdPersonCamera",
       -Math.PI / 2,
       Math.PI / 3.4,
-      12,
+      this.defaultCameraRadius,
       this.mesh.position,
       scene
     );
-    this.camera.lowerRadiusLimit = 5.6;
-    this.camera.upperRadiusLimit = 14;
+    if (this.usesTouchControls()) {
+      this.camera.lowerRadiusLimit = this.defaultCameraRadius;
+      this.camera.upperRadiusLimit = this.defaultCameraRadius;
+      this.camera.panningSensibility = 0;
+    } else {
+      this.camera.lowerRadiusLimit = 5.6;
+      this.camera.upperRadiusLimit = 14;
+      this.camera.attachControl(scene.getEngine().getRenderingCanvas(), true);
+    }
     this.camera.lowerBetaLimit = Math.PI / 4.2;
     this.camera.upperBetaLimit = Math.PI / 2.25;
     this.camera.wheelPrecision = 75;
     this.camera.inertia = 0.72;
-    this.camera.attachControl(scene.getEngine().getRenderingCanvas(), true);
     scene.activeCamera = this.camera;
 
     this.createPlayerOcclusionOutline();
@@ -276,5 +283,12 @@ export class PlayerController {
 
   private clamp(value: number, min: number, max: number) {
     return Math.max(min, Math.min(max, value));
+  }
+
+  private usesTouchControls() {
+    return (
+      window.matchMedia("(pointer: coarse), (hover: none)").matches ||
+      navigator.maxTouchPoints > 0
+    );
   }
 }
