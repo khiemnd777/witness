@@ -1,0 +1,20 @@
+name = "witness-gameplay-worker"
+description = "Implementation worker for bounded The Witness runtime, React UI, Babylon scene, input, and gameplay-system changes."
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Own only the gameplay/runtime/UI files the parent agent assigns.
+Use $witness-gameplay-workflow to preserve the existing React, Zustand, Babylon.js, session, manager, and scene patterns.
+Use $witness-content-workflow if the change touches authored JSON or content validation.
+Read STORYLINE.md before creating chapter scenes or implementing chapter-specific gameplay.
+Keep sacred narrative guardrails intact and report any content-contract implications back to the parent agent.
+You are not alone in the codebase; do not revert edits you did not make.
+"""
+nickname_candidates = ["Comet", "Meridian", "Vector"]
+
+[[skills.config]]
+path = ".agents/skills/witness-gameplay-workflow/SKILL.md"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/witness-content-workflow/SKILL.md"
+enabled = true

@@ -1,0 +1,101 @@
+[
+  {
+    "id": "chapter_02_quest_01",
+    "chapterId": "chapter_02",
+    "title": "Welcome the Pilgrims",
+    "description": "Help weary families arriving for Passover find care near the temple gates.",
+    "location": "Jerusalem Temple Gates",
+    "steps": [
+      {
+        "id": "speak_with_pilgrim_elder",
+        "type": "talk",
+        "npcId": "pilgrim_elder_02",
+        "instruction": "Speak with the pilgrim elder near the lower court."
+      },
+      {
+        "id": "collect_water_skin",
+        "type": "collect",
+        "itemId": "water_skin",
+        "count": 1,
+        "instruction": "Find a filled water skin for the families arriving from the road."
+      },
+      {
+        "id": "bring_water_to_gate",
+        "type": "give_item",
+        "itemId": "water_skin",
+        "target": "temple_gate",
+        "requiresItemId": "water_skin",
+        "instruction": "Bring the water skin to the temple gate."
+      }
+    ],
+    "rewards": {
+      "love": 1,
+      "humility": 1
+    },
+    "reflection": {
+      "theme": "Service",
+      "message": "Pilgrimage begins with ordinary care for people who are tired from the road.",
+      "bibleRefIds": ["luke_2_41_42"]
+    }
+  },
+  {
+    "id": "chapter_02_quest_02",
+    "chapterId": "chapter_02",
+    "title": "Listen in the Courts",
+    "description": "Enter the temple courts and listen carefully before speaking.",
+    "location": "Temple Courts",
+    "steps": [
+      {
+        "id": "ask_temple_teacher",
+        "type": "talk",
+        "npcId": "temple_teacher_02",
+        "instruction": "Ask the teacher what the people are discussing."
+      },
+      {
+        "id": "observe_teaching_court",
+        "type": "observe",
+        "target": "teaching_court",
+        "instruction": "Observe the circle of teachers in the temple court."
+      }
+    ],
+    "rewards": {
+      "wisdom": 1,
+      "faith": 1
+    },
+    "reflection": {
+      "theme": "Listening",
+      "message": "Wisdom is not rushed. It listens, asks, and receives what God is teaching.",
+      "bibleRefIds": ["luke_2_46_47"]
+    }
+  },
+  {
+    "id": "chapter_02_quest_03",
+    "chapterId": "chapter_02",
+    "title": "His Father's House",
+    "description": "Stand with Mary near the teachers and reflect on Jesus' words with reverence.",
+    "location": "Temple Courts",
+    "steps": [
+      {
+        "id": "speak_with_mary",
+        "type": "talk",
+        "npcId": "mary_02",
+        "instruction": "Speak with Mary after the child is found."
+      },
+      {
+        "id": "witness_fathers_house",
+        "type": "observe",
+        "target": "fathers_house_scene",
+        "instruction": "Witness the sacred narrative scene in the temple court."
+      }
+    ],
+    "rewards": {
+      "faith": 1,
+      "wisdom": 1
+    },
+    "reflection": {
+      "theme": "Obedience",
+      "message": "Jesus' words reveal devotion to the Father, while the family returns home in humble obedience.",
+      "bibleRefIds": ["luke_2_48_52"]
+    }
+  }
+]

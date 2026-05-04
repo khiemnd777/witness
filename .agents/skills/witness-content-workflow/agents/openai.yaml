@@ -1,0 +1,7 @@
+interface:
+  display_name: "Witness Content Workflow"
+  short_description: "Edit Witness chapter content safely"
+  default_prompt: "Use $witness-content-workflow to update this The Witness chapter content safely."
+policy:
+  allow_implicit_invocation: true
+

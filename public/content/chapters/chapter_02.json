@@ -1,0 +1,14 @@
+{
+  "id": "chapter_02",
+  "number": 2,
+  "title": "In My Father's House",
+  "subtitle": "Jerusalem Temple",
+  "location": "Jerusalem",
+  "summary": "A young witness helps Passover pilgrims in Jerusalem, listens in the temple courts, and reflects on Jesus' words among the teachers.",
+  "theme": "Faith grows through worship, listening, and humble obedience.",
+  "questIds": [
+    "chapter_02_quest_01",
+    "chapter_02_quest_02",
+    "chapter_02_quest_03"
+  ]
+}

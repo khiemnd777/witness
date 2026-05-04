@@ -1,0 +1,42 @@
+[
+  {
+    "id": "pilgrim_elder_02",
+    "name": "Pilgrim Elder",
+    "role": "common",
+    "description": "An elder guiding tired families into Jerusalem for Passover.",
+    "dialogueId": "jerusalem_pilgrim_elder_02",
+    "position": [-5.4, 0, -2.2],
+    "interactionLabel": "Offer help"
+  },
+  {
+    "id": "temple_teacher_02",
+    "name": "Temple Teacher",
+    "role": "historical",
+    "description": "A teacher listening carefully in the temple courts.",
+    "dialogueId": "jerusalem_temple_teacher_02",
+    "position": [3.8, 0, 4.6],
+    "interactionLabel": "Ask about the teaching"
+  },
+  {
+    "id": "mary_02",
+    "name": "Mary",
+    "role": "historical",
+    "description": "Mary stands near the teachers after searching for Jesus.",
+    "dialogueId": "jerusalem_mary_02",
+    "position": [-2.7, 0, 4.35],
+    "interactionLabel": "Speak with Mary"
+  },
+  {
+    "id": "jesus_in_temple",
+    "name": "Jesus",
+    "role": "sacred_narrative",
+    "description": "Represented only within the sacred narrative scene among the teachers, never as a normal quest NPC.",
+    "position": [0.55, 0, 5.62],
+    "interactionLabel": "Witness with reverence",
+    "sacredRules": {
+      "normalQuestNpc": false,
+      "commandable": false,
+      "playable": false
+    }
+  }
+]

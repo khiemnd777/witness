@@ -1,0 +1,17 @@
+[
+  {
+    "id": "temple_gate",
+    "label": "Temple Gate",
+    "kind": "location"
+  },
+  {
+    "id": "teaching_court",
+    "label": "Teaching Court",
+    "kind": "observe"
+  },
+  {
+    "id": "fathers_house_scene",
+    "label": "Father's House",
+    "kind": "observe"
+  }
+]

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Witness Regression Review"
+  short_description: "Review Witness changes for regressions"
+  default_prompt: "Use $witness-regression-review to review this The Witness change for regressions."
+policy:
+  allow_implicit_invocation: true
+

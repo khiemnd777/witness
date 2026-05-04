@@ -1,0 +1,7 @@
+interface:
+  display_name: "Witness Gameplay Workflow"
+  short_description: "Implement Witness runtime and UI changes"
+  default_prompt: "Use $witness-gameplay-workflow to implement this The Witness gameplay or UI change."
+policy:
+  allow_implicit_invocation: true
+

@@ -2,6 +2,7 @@ import type { Scene } from "@babylonjs/core";
 import type { InputManager } from "../engine/InputManager";
 import { BethlehemScene } from "./BethlehemScene";
 import type { ChapterScene, ChapterSceneCallbacks } from "./ChapterScene";
+import { JerusalemTempleScene } from "./JerusalemTempleScene";
 
 export type ChapterSceneFactory = (
   scene: Scene,
@@ -10,7 +11,8 @@ export type ChapterSceneFactory = (
 ) => ChapterScene;
 
 const SCENE_REGISTRY = new Map<string, ChapterSceneFactory>([
-  ["chapter_01", (scene, input, callbacks) => new BethlehemScene(scene, input, callbacks)]
+  ["chapter_01", (scene, input, callbacks) => new BethlehemScene(scene, input, callbacks)],
+  ["chapter_02", (scene, input, callbacks) => new JerusalemTempleScene(scene, input, callbacks)]
 ]);
 
 export function createChapterScene(

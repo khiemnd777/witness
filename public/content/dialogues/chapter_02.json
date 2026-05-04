@@ -1,0 +1,88 @@
+[
+  {
+    "id": "jerusalem_pilgrim_elder_02",
+    "npcId": "pilgrim_elder_02",
+    "title": "Arrival at Passover",
+    "lines": [
+      {
+        "id": "line_01",
+        "speaker": "Pilgrim Elder",
+        "text": "The road into Jerusalem has been long, and many families are still arriving."
+      },
+      {
+        "id": "line_02",
+        "speaker": "Player",
+        "text": "What would help them most before they enter the courts?"
+      },
+      {
+        "id": "line_03",
+        "speaker": "Pilgrim Elder",
+        "text": "A skin of water by the gate would be a kindness to those who are weary."
+      },
+      {
+        "id": "line_04",
+        "speaker": "Player",
+        "choices": [
+          {
+            "id": "serve_pilgrims_love",
+            "text": "I will serve them quietly.",
+            "effect": {
+              "love": 1
+            }
+          },
+          {
+            "id": "serve_pilgrims_humility",
+            "text": "I will make room for the tired ones first.",
+            "effect": {
+              "humility": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "jerusalem_temple_teacher_02",
+    "npcId": "temple_teacher_02",
+    "title": "Questions in the Courts",
+    "lines": [
+      {
+        "id": "line_01",
+        "speaker": "Temple Teacher",
+        "text": "The child listens with care, and His questions have made the elders pause."
+      },
+      {
+        "id": "line_02",
+        "speaker": "Player",
+        "text": "Then I should listen before I speak."
+      },
+      {
+        "id": "line_03",
+        "speaker": "Temple Teacher",
+        "text": "That is the beginning of wisdom in the house of prayer."
+      }
+    ]
+  },
+  {
+    "id": "jerusalem_mary_02",
+    "npcId": "mary_02",
+    "title": "Treasured Words",
+    "lines": [
+      {
+        "id": "line_01",
+        "speaker": "Mary",
+        "text": "We searched with sorrow, and now we have found Him here."
+      },
+      {
+        "id": "line_02",
+        "speaker": "Player",
+        "text": "His words seem simple, but they are weighty."
+      },
+      {
+        "id": "line_03",
+        "speaker": "Mary",
+        "text": "Some things must be treasured in the heart until God makes them plain."
+      }
+    ]
+  }
+]

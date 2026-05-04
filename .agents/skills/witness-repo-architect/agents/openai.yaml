@@ -1,0 +1,7 @@
+interface:
+  display_name: "Witness Repo Architect"
+  short_description: "Classify Witness repo ownership quickly"
+  default_prompt: "Use $witness-repo-architect to classify this The Witness task and name the smallest files to inspect."
+policy:
+  allow_implicit_invocation: true
+
